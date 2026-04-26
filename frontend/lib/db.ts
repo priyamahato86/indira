@@ -34,6 +34,10 @@ async function ensureIndexes(db: Db) {
     db.collection("policies").createIndex({ user_id: 1, created_at: -1 }),
     db.collection("cases").createIndex({ user_id: 1, created_at: -1 }),
     db.collection("cases").createIndex({ policy_id: 1 }),
+    db.collection("cases").createIndex(
+      { "share.token": 1 },
+      { sparse: true, unique: true },
+    ),
   ]);
 }
 
@@ -95,6 +99,11 @@ export type PolicyDoc = {
   documents: EmbeddedDoc[];
 };
 
+export type ShareInfo = {
+  token: string;
+  created_at: Date;
+};
+
 export type CaseDoc = {
   _id: ObjectId;
   user_id: ObjectId;
@@ -109,6 +118,7 @@ export type CaseDoc = {
   documents: EmbeddedDoc[];
   analysis?: AnalysisResult | null;
   comparisons?: Record<string, AnalysisResult> | null;
+  share?: ShareInfo | null;
 };
 
 export async function users(): Promise<Collection<UserDoc>> {

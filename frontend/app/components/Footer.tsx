@@ -1,3 +1,5 @@
+import BrandLogo from "./BrandLogo";
+
 const columns = [
   {
     heading: "Product",
@@ -23,28 +25,8 @@ export default function Footer() {
       <div className="max-w-[1280px] mx-auto px-6 md:px-10 py-16 md:py-20">
         <div className="grid md:grid-cols-12 gap-10">
           <div className="md:col-span-4">
-            <div className="flex items-center gap-2.5 text-[color:var(--color-ink)]">
-              <span
-                className="inline-flex items-center justify-center w-8 h-8 rounded-[10px] text-white text-[15px] font-bold shadow-sm"
-                style={{
-                  background:
-                    "linear-gradient(135deg, var(--color-brand) 0%, #1B52D9 100%)",
-                }}
-                aria-hidden
-              >
-                <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-                  <path
-                    d="M5 3h6M5 13h6M8 3v10"
-                    stroke="#fff"
-                    strokeWidth="2.2"
-                    strokeLinecap="round"
-                  />
-                  <circle cx="8" cy="8" r="1.4" fill="#fff" />
-                </svg>
-              </span>
-              <span className="text-[19px] font-semibold tracking-[-0.01em]">
-                Indira
-              </span>
+            <div className="text-[color:var(--color-ink)]">
+              <BrandLogo size={36} withWordmark wordmarkSize={20} />
             </div>
             <p className="mt-4 max-w-[320px] text-[14px] leading-[1.6] text-[color:var(--color-muted)]">
               The independent second-opinion layer between every Indian

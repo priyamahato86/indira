@@ -174,15 +174,21 @@ function ReportRow({
   const highCount = analysis.discrepancies.filter(
     (d) => d.severity === "high",
   ).length;
+  const detailHref = `/dashboard/reports/${caseData.id}`;
 
   return (
-    <Link
-      href={`/dashboard/reports/${caseData.id}`}
-      className={`grid grid-cols-12 gap-4 px-6 py-5 items-center hover:bg-surface transition-colors ${
+    <div
+      className={`relative grid grid-cols-12 gap-4 px-6 py-5 items-center hover:bg-surface transition-colors ${
         isLast ? "" : "border-b border-line"
       }`}
     >
-      <div className="col-span-12 md:col-span-4 min-w-0">
+      <Link
+        href={detailHref}
+        aria-label={`Open report for ${caseData.patient_name}`}
+        className="absolute inset-0 z-0"
+      />
+
+      <div className="col-span-12 md:col-span-4 min-w-0 relative z-10 pointer-events-none">
         <div className="text-[15px] font-semibold truncate">
           {caseData.patient_name}
         </div>
@@ -193,7 +199,7 @@ function ReportRow({
         )}
       </div>
 
-      <div className="col-span-6 md:col-span-2 min-w-0">
+      <div className="col-span-6 md:col-span-2 min-w-0 relative z-10 pointer-events-none">
         {insurer && (
           <div className="inline-flex items-center gap-1.5 text-[13px]">
             <span
@@ -205,7 +211,7 @@ function ReportRow({
         )}
       </div>
 
-      <div className="col-span-6 md:col-span-2">
+      <div className="col-span-6 md:col-span-2 relative z-10 pointer-events-none">
         {analysis.status === "APPROVED" ? (
           <div className="flex items-baseline gap-1.5">
             <span
@@ -238,7 +244,7 @@ function ReportRow({
         </div>
       </div>
 
-      <div className="col-span-6 md:col-span-2">
+      <div className="col-span-6 md:col-span-2 relative z-10 pointer-events-none">
         {issues === 0 ? (
           <div className="text-[13px] text-[#0F9D58] font-semibold inline-flex items-center gap-1.5">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
@@ -268,9 +274,9 @@ function ReportRow({
         )}
       </div>
 
-      <div className="col-span-6 md:col-span-2 flex items-center justify-between gap-3">
+      <div className="col-span-6 md:col-span-2 flex items-center justify-between gap-3 relative z-10">
         <span
-          className={`inline-flex items-center gap-1.5 px-2.5 py-1 text-[10px] font-bold tracking-wide uppercase rounded-full ${bandPill(analysis.risk_band)}`}
+          className={`inline-flex items-center gap-1.5 px-2.5 py-1 text-[10px] font-bold tracking-wide uppercase rounded-full pointer-events-none ${bandPill(analysis.risk_band)}`}
         >
           <span
             className="w-1.5 h-1.5 rounded-full"
@@ -278,13 +284,98 @@ function ReportRow({
           />
           {analysis.risk_band}
         </span>
-        <div className="text-right">
-          <div className="text-[11px] text-muted">{analysed}</div>
-          <div className="text-[12px] font-semibold text-brand mt-0.5">
-            View →
+        <div className="flex items-center gap-1.5">
+          <RowIconLink
+            href={`${detailHref}?print=1`}
+            label="Download PDF"
+            external
+          >
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
+              <path
+                d="M6 9V3h12v6M6 18H4a2 2 0 0 1-2-2v-4a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v4a2 2 0 0 1-2 2h-2"
+                stroke="currentColor"
+                strokeWidth="1.8"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+              <path
+                d="M6 14h12v7H6z"
+                stroke="currentColor"
+                strokeWidth="1.8"
+                strokeLinejoin="round"
+              />
+            </svg>
+          </RowIconLink>
+          <RowIconLink
+            href={`${detailHref}#share`}
+            label="Share link"
+            active={Boolean(caseData.share)}
+          >
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
+              <path
+                d="M10 14a4 4 0 0 0 5.66 0l3-3a4 4 0 1 0-5.66-5.66L11.5 7"
+                stroke="currentColor"
+                strokeWidth="1.8"
+                strokeLinecap="round"
+              />
+              <path
+                d="M14 10a4 4 0 0 0-5.66 0l-3 3a4 4 0 1 0 5.66 5.66L12.5 17"
+                stroke="currentColor"
+                strokeWidth="1.8"
+                strokeLinecap="round"
+              />
+            </svg>
+          </RowIconLink>
+          <div className="text-right ml-2">
+            <div className="text-[11px] text-muted">{analysed}</div>
+            <Link
+              href={detailHref}
+              className="text-[12px] font-semibold text-brand mt-0.5 hover:text-brand-hover inline-flex"
+              onClick={(e) => e.stopPropagation()}
+            >
+              View →
+            </Link>
           </div>
         </div>
       </div>
+    </div>
+  );
+}
+
+function RowIconLink({
+  href,
+  label,
+  children,
+  external,
+  active,
+}: {
+  href: string;
+  label: string;
+  children: React.ReactNode;
+  external?: boolean;
+  active?: boolean;
+}) {
+  return (
+    <Link
+      href={href}
+      target={external ? "_blank" : undefined}
+      rel={external ? "noopener noreferrer" : undefined}
+      onClick={(e) => e.stopPropagation()}
+      title={label}
+      aria-label={label}
+      className={`relative w-8 h-8 rounded-lg border flex items-center justify-center transition-colors ${
+        active
+          ? "bg-brand-subtle border-brand text-brand"
+          : "bg-white border-line text-muted hover:border-brand hover:text-brand hover:bg-brand-subtle"
+      }`}
+    >
+      {children}
+      {active && (
+        <span
+          className="absolute -top-0.5 -right-0.5 w-2 h-2 rounded-full bg-success border border-white"
+          aria-hidden
+        />
+      )}
     </Link>
   );
 }

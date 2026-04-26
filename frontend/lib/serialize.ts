@@ -47,6 +47,11 @@ export type ApiAnalysis = {
   analyzed_at: string;
 };
 
+export type ApiShare = {
+  token: string;
+  created_at: string;
+};
+
 export type ApiCase = {
   id: string;
   policy_id: string;
@@ -61,6 +66,7 @@ export type ApiCase = {
   policy: { id: string; insurer: string; policy_name: string | null } | null;
   analysis: ApiAnalysis | null;
   comparisons: Record<string, ApiAnalysis>;
+  share: ApiShare | null;
 };
 
 export function serializeUser(u: UserDoc): ApiUser {
@@ -147,5 +153,14 @@ export function serializeCase(
           Object.entries(c.comparisons).map(([k, v]) => [k, serializeAnalysis(v)]),
         )
       : {},
+    share: c.share
+      ? {
+          token: c.share.token,
+          created_at:
+            c.share.created_at instanceof Date
+              ? c.share.created_at.toISOString()
+              : new Date(c.share.created_at).toISOString(),
+        }
+      : null,
   };
 }

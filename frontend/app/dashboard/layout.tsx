@@ -15,10 +15,14 @@ export default async function DashboardLayout({
 
   return (
     <div className="min-h-screen flex flex-col md:flex-row bg-[color:var(--color-surface)]">
-      <DashboardNav email={user.email} />
+      <div data-print-hide className="contents">
+        <DashboardNav email={user.email} />
+      </div>
 
       <div className="flex-1 flex flex-col h-screen overflow-hidden">
-        <DashboardTopBar />
+        <div data-print-hide>
+          <DashboardTopBar />
+        </div>
         <main className="flex-1 overflow-y-auto">
           <div className="w-full max-w-[1280px] mx-auto px-6 md:px-10 py-8">
             {children}

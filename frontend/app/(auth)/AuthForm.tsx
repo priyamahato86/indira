@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
+import BrandLogo from "@/app/components/BrandLogo";
 
 type Mode = "login" | "signup";
 
@@ -47,12 +48,9 @@ export default function AuthForm({ mode }: { mode: Mode }) {
       <div className="w-full max-w-md">
         <Link
           href="/"
-          className="flex items-center gap-2.5 mb-8 text-[color:var(--color-ink)]"
+          className="inline-flex items-center mb-8 text-[color:var(--color-ink)]"
         >
-          <IndiraMark />
-          <span className="text-[20px] font-semibold tracking-[-0.01em]">
-            Indira
-          </span>
+          <BrandLogo size={36} withWordmark wordmarkSize={20} priority />
         </Link>
 
         <div className="bg-white border border-[color:var(--color-line)] rounded-2xl p-8 shadow-sm">
@@ -145,25 +143,3 @@ export default function AuthForm({ mode }: { mode: Mode }) {
   );
 }
 
-function IndiraMark() {
-  return (
-    <span
-      className="inline-flex items-center justify-center w-8 h-8 rounded-[10px] text-white text-[15px] font-bold shadow-sm"
-      style={{
-        background:
-          "linear-gradient(135deg, var(--color-brand) 0%, #1B52D9 100%)",
-      }}
-      aria-hidden
-    >
-      <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-        <path
-          d="M5 3h6M5 13h6M8 3v10"
-          stroke="#fff"
-          strokeWidth="2.2"
-          strokeLinecap="round"
-        />
-        <circle cx="8" cy="8" r="1.4" fill="#fff" />
-      </svg>
-    </span>
-  );
-}

@@ -38,3 +38,188 @@ body {
 .animate-ticker {
   animation: ticker-scroll 40s linear infinite;
 }
+
+/* Slim, on-brand scrollbars for in-app scrollable surfaces */
+.scrollbar-pretty {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(0, 0, 0, 0.18) transparent;
+}
+.scrollbar-pretty::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+.scrollbar-pretty::-webkit-scrollbar-track {
+  background: transparent;
+}
+.scrollbar-pretty::-webkit-scrollbar-thumb {
+  background-color: rgba(0, 0, 0, 0.16);
+  border-radius: 999px;
+  border: 2px solid transparent;
+  background-clip: padding-box;
+  transition: background-color 0.2s;
+}
+.scrollbar-pretty::-webkit-scrollbar-thumb:hover {
+  background-color: rgba(0, 0, 0, 0.32);
+  background-clip: padding-box;
+}
+.scrollbar-pretty::-webkit-scrollbar-thumb:active {
+  background-color: var(--color-brand);
+  background-clip: padding-box;
+}
+.scrollbar-pretty::-webkit-scrollbar-corner {
+  background: transparent;
+}
+
+/* Auto-hide variant: thumb only appears on hover/scroll over the element */
+.scrollbar-auto {
+  scrollbar-width: thin;
+  scrollbar-color: transparent transparent;
+  transition: scrollbar-color 0.3s;
+}
+.scrollbar-auto:hover,
+.scrollbar-auto:focus-within {
+  scrollbar-color: rgba(0, 0, 0, 0.22) transparent;
+}
+.scrollbar-auto::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+.scrollbar-auto::-webkit-scrollbar-track {
+  background: transparent;
+}
+.scrollbar-auto::-webkit-scrollbar-thumb {
+  background-color: transparent;
+  border-radius: 999px;
+  border: 2px solid transparent;
+  background-clip: padding-box;
+  transition: background-color 0.25s;
+}
+.scrollbar-auto:hover::-webkit-scrollbar-thumb,
+.scrollbar-auto:focus-within::-webkit-scrollbar-thumb {
+  background-color: rgba(0, 0, 0, 0.18);
+  background-clip: padding-box;
+}
+.scrollbar-auto::-webkit-scrollbar-thumb:hover {
+  background-color: rgba(0, 0, 0, 0.34) !important;
+  background-clip: padding-box;
+}
+
+/* Print stylesheet — used by Download PDF action on the report page */
+@media print {
+  @page {
+    size: A4;
+    margin: 14mm 12mm;
+  }
+
+  html, body {
+    background: #fff !important;
+    color: #000 !important;
+    width: 100% !important;
+    height: auto !important;
+    overflow: visible !important;
+  }
+  body {
+    margin: 0 !important;
+    padding: 0 !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  /* Hide app chrome and any element flagged for print-hide */
+  [data-print-hide],
+  [data-print-hide] * {
+    display: none !important;
+  }
+
+  /* Force background colors and gradients to render in print (Chromium) */
+  * {
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  /* Neutralise the colourful gradient hero so it prints clean and readable */
+  [data-print-hero] {
+    background: #fff !important;
+    color: var(--color-ink) !important;
+    border: 1px solid var(--color-line) !important;
+    padding: 16pt 18pt !important;
+    box-shadow: none !important;
+    border-radius: 6pt !important;
+    overflow: visible !important;
+  }
+  [data-print-hero] *,
+  [data-print-hero] h1,
+  [data-print-hero] p,
+  [data-print-hero] span {
+    color: var(--color-ink) !important;
+  }
+  [data-print-hero] h1 {
+    font-size: 24pt !important;
+    line-height: 1.1 !important;
+  }
+  [data-print-hero] .opacity-80,
+  [data-print-hero] .opacity-90 {
+    opacity: 1 !important;
+  }
+  /* Hero status chips: white-on-white-bg without ink correction wouldn't read */
+  [data-print-hero] .bg-white\/20 {
+    background: var(--color-surface-alt) !important;
+    border-color: var(--color-line) !important;
+  }
+
+  /* Containers in the dashboard layout that constrain to viewport height
+     and clip overflow — would otherwise show only one screenful in the print */
+  .h-screen,
+  .min-h-screen {
+    height: auto !important;
+    min-height: 0 !important;
+  }
+  .overflow-hidden,
+  .overflow-y-auto,
+  .overflow-x-hidden {
+    overflow: visible !important;
+  }
+
+  /* Drop dashboard layout outer padding/width caps */
+  main,
+  main > div {
+    padding: 0 !important;
+    margin: 0 !important;
+    max-width: none !important;
+  }
+
+  /* Recharts: pin SVG to the wrapper so layout doesn't collapse in print */
+  .recharts-responsive-container,
+  .recharts-wrapper {
+    width: 100% !important;
+    height: auto !important;
+  }
+  .recharts-wrapper svg {
+    width: 100% !important;
+    height: auto !important;
+    max-height: 260px;
+  }
+  .recharts-tooltip-wrapper {
+    display: none !important;
+  }
+
+  /* Avoid splitting cards / sections / charts across pages where avoidable */
+  section,
+  article,
+  .recharts-wrapper {
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+
+  /* Slightly larger paper-friendly base */
+  html {
+    font-size: 10.5pt;
+  }
+
+  /* Anything portalled to body and pinned in fixed position would otherwise
+     bleed into the print output — close any popovers / modals in print */
+  [role="dialog"],
+  .fixed.inset-0 {
+    display: none !important;
+  }
+}

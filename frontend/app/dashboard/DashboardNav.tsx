@@ -3,61 +3,7 @@
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useState } from "react";
-
-function Wordmark({ size = 22 }: { size?: number }) {
-  return (
-    <span
-      className="inline-flex items-baseline gap-1 group-hover:opacity-90 transition-opacity"
-      style={{ fontSize: size, lineHeight: 1 }}
-    >
-      <span
-        className="font-bold tracking-[-0.035em] bg-clip-text text-transparent"
-        style={{
-          backgroundImage:
-            "linear-gradient(125deg, #1A1A1A 0%, #1A1A1A 55%, #2C68FF 100%)",
-        }}
-      >
-        ind<span className="italic">i</span>ra
-      </span>
-      <span
-        aria-hidden
-        className="rounded-full bg-brand"
-        style={{
-          width: Math.max(4, size * 0.18),
-          height: Math.max(4, size * 0.18),
-          alignSelf: "flex-end",
-          marginBottom: size * 0.08,
-        }}
-      />
-    </span>
-  );
-}
-
-function IndiraMark({ size = 32 }: { size?: number }) {
-  const inner = Math.round(size * 0.5);
-  return (
-    <span
-      className="inline-flex items-center justify-center rounded-[10px] text-white shadow-sm"
-      style={{
-        width: size,
-        height: size,
-        background:
-          "linear-gradient(135deg, var(--color-brand) 0%, #1B52D9 100%)",
-      }}
-      aria-hidden
-    >
-      <svg width={inner} height={inner} viewBox="0 0 16 16" fill="none">
-        <path
-          d="M5 3h6M5 13h6M8 3v10"
-          stroke="#fff"
-          strokeWidth="2.2"
-          strokeLinecap="round"
-        />
-        <circle cx="8" cy="8" r="1.4" fill="#fff" />
-      </svg>
-    </span>
-  );
-}
+import BrandLogo, { Wordmark } from "@/app/components/BrandLogo";
 
 function PoliciesIcon({ className }: { className?: string }) {
   return (
@@ -180,11 +126,10 @@ export default function DashboardNav({ email }: { email: string }) {
       <div className="md:hidden flex items-center justify-between bg-white border-b border-line px-5 h-16 shrink-0">
         <Link
           href="/"
-          className="flex items-center gap-2.5 group"
+          className="group"
           aria-label="Indira home"
         >
-          <IndiraMark size={28} />
-          <Wordmark size={18} />
+          <BrandLogo size={32} withWordmark wordmarkSize={18} />
         </Link>
         <button
           onClick={() => setMenuOpen((v) => !v)}
@@ -213,7 +158,7 @@ export default function DashboardNav({ email }: { email: string }) {
             className="flex items-center gap-3 group"
             aria-label="Indira home"
           >
-            <IndiraMark size={34} />
+            <BrandLogo size={38} />
             <div className="flex flex-col leading-none">
               <Wordmark size={22} />
               <span className="mt-1.5 text-[10px] font-bold uppercase tracking-[0.18em] text-muted">
