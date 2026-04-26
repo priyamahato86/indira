@@ -2,7 +2,7 @@ import { cases, policies } from "@/lib/db";
 import { requireUser } from "@/lib/session";
 import { serializeCase } from "@/lib/serialize";
 import ReportsListClient from "./ReportsListClient";
-
+//
 export const dynamic = "force-dynamic";
 
 export default async function ReportsPage() {
@@ -20,15 +20,15 @@ export default async function ReportsPage() {
   );
   const policyDocs = policyIds.length
     ? await policiesCol
-        .find(
-          {
-            _id: {
-              $in: list.map((c) => c.policy_id),
-            },
+      .find(
+        {
+          _id: {
+            $in: list.map((c) => c.policy_id),
           },
-          { projection: { insurer: 1, policy_name: 1 } },
-        )
-        .toArray()
+        },
+        { projection: { insurer: 1, policy_name: 1 } },
+      )
+      .toArray()
     : [];
   const byId = new Map(policyDocs.map((p) => [p._id.toHexString(), p]));
 
