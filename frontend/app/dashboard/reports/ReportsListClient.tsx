@@ -1,7 +1,9 @@
 "use client";
 
 import Link from "next/link";
+import { useState } from "react";
 import { findInsurer } from "@/lib/insurers";
+import { useTranslate } from "@/hooks/useTranslate";
 import type { ApiAnalysis, ApiCase } from "@/lib/serialize";
 
 function bandColor(band: ApiAnalysis["risk_band"]): string {
@@ -24,11 +26,38 @@ const STATUS_LABEL: Record<ApiAnalysis["status"], string> = {
   REJECTED: "Rejected",
 };
 
+// All static UI strings to translate
+const UI_STRINGS = [
+  "Reports",
+  "Insurance check reports",
+  "Every case you've analysed against your policy. Click any report to open the full breakdown.",
+  "Total reports",
+  "Avg risk score",
+  "High risk",
+  "Clean claims",
+  "All reports",
+  "report",
+  "reports",
+  "No reports yet",
+  "Run an insurance check on a case to generate a report. You'll see all your analysed claims here.",
+  "Go to cases",
+  "All clear",
+  "issue",
+  "issues",
+  "high",
+  "View →",
+  "Switch to Hindi",
+  "Switch to English",
+];
+
 export default function ReportsListClient({
   initial,
 }: {
   initial: ApiCase[];
 }) {
+  const [lang, setLang] = useState<"en" | "hi">("en");
+  const t = useTranslate(UI_STRINGS, lang);
+
   const total = initial.length;
   const counts = initial.reduce(
     (acc, c) => {
@@ -44,9 +73,9 @@ export default function ReportsListClient({
 
   const avgScore = total
     ? Math.round(
-        initial.reduce((sum, c) => sum + (c.analysis?.risk_score ?? 0), 0) /
-          total,
-      )
+      initial.reduce((sum, c) => sum + (c.analysis?.risk_score ?? 0), 0) /
+      total,
+    )
     : 0;
 
   return (
@@ -54,40 +83,51 @@ export default function ReportsListClient({
       <header className="flex items-end justify-between">
         <div>
           <div className="text-[12px] font-bold uppercase tracking-[0.08em] text-brand">
-            Reports
+            {t["Reports"] ?? "Reports"}
           </div>
           <h1 className="mt-1.5 text-[28px] font-semibold tracking-tight">
-            Insurance check reports
+            {t["Insurance check reports"] ?? "Insurance check reports"}
           </h1>
           <p className="mt-1 text-[14px] text-muted">
-            Every case you&apos;ve analysed against your policy. Click any
-            report to open the full breakdown.
+            {t["Every case you've analysed against your policy. Click any report to open the full breakdown."] ??
+              "Every case you've analysed against your policy. Click any report to open the full breakdown."}
           </p>
         </div>
+
+        {/* Language Toggle */}
+        <button
+          onClick={() => setLang((l) => (l === "en" ? "hi" : "en"))}
+          className="flex items-center gap-2 rounded-lg border border-line bg-white px-4 py-2 text-[13px] font-semibold hover:bg-surface transition-colors shadow-sm"
+        >
+          <span className="text-[16px]">{lang === "en" ? "🇮🇳" : "🇬🇧"}</span>
+          {lang === "en"
+            ? (t["Switch to Hindi"] ?? "Switch to Hindi")
+            : (t["Switch to English"] ?? "Switch to English")}
+        </button>
       </header>
 
       {total === 0 ? (
-        <EmptyState />
+        <EmptyState t={t} />
       ) : (
         <>
           <section className="border border-line bg-white">
             <div className="grid grid-cols-2 md:grid-cols-4">
-              <Stat label="Total reports" value={String(total)} />
+              <Stat label={t["Total reports"] ?? "Total reports"} value={String(total)} />
               <Stat
-                label="Avg risk score"
+                label={t["Avg risk score"] ?? "Avg risk score"}
                 value={String(avgScore)}
                 accent={bandColor(
                   avgScore >= 70 ? "red" : avgScore >= 40 ? "yellow" : "green",
                 )}
               />
               <Stat
-                label="High risk"
+                label={t["High risk"] ?? "High risk"}
                 value={String(counts.red)}
                 accent="#E5484D"
                 hint={`${counts.red} of ${total}`}
               />
               <Stat
-                label="Clean claims"
+                label={t["Clean claims"] ?? "Clean claims"}
                 value={String(counts.green)}
                 accent="#0F9D58"
                 hint={`${counts.green} of ${total}`}
@@ -99,10 +139,13 @@ export default function ReportsListClient({
           <section>
             <div className="flex items-baseline justify-between mb-3">
               <h2 className="text-[12px] font-bold uppercase tracking-[0.08em] text-muted">
-                All reports
+                {t["All reports"] ?? "All reports"}
               </h2>
               <span className="text-[13px] text-muted">
-                {total} {total === 1 ? "report" : "reports"}
+                {total}{" "}
+                {total === 1
+                  ? (t["report"] ?? "report")
+                  : (t["reports"] ?? "reports")}
               </span>
             </div>
             <div className="border border-line bg-white">
@@ -111,6 +154,8 @@ export default function ReportsListClient({
                   key={c.id}
                   caseData={c}
                   isLast={i === initial.length - 1}
+                  t={t}
+                  lang={lang}
                 />
               ))}
             </div>
@@ -147,9 +192,7 @@ function Stat({
       >
         {value}
       </div>
-      {hint && (
-        <div className="mt-1.5 text-[12px] text-muted">{hint}</div>
-      )}
+      {hint && <div className="mt-1.5 text-[12px] text-muted">{hint}</div>}
     </div>
   );
 }
@@ -157,38 +200,57 @@ function Stat({
 function ReportRow({
   caseData,
   isLast,
+  t,
+  lang,
 }: {
   caseData: ApiCase;
   isLast: boolean;
+  t: Record<string, string>;
+  lang: "en" | "hi";
 }) {
+  // Translate dynamic patient/diagnosis strings per-row
+  const rowStrings = [
+    caseData.patient_name,
+    caseData.diagnosis ?? "",
+  ];
+  const rowT = useTranslate(rowStrings, lang);
+
   const analysis = caseData.analysis!;
   const insurer = caseData.policy
     ? findInsurer(caseData.policy.insurer)
     : undefined;
-  const analysed = new Date(analysis.analyzed_at).toLocaleDateString(undefined, {
-    day: "numeric",
-    month: "short",
-    year: "numeric",
-  });
+  // Always use a fixed locale to avoid SSR/client hydration mismatch.
+  // "en-GB" gives "26 Apr 2026" consistently on server and client.
+  const analysed = new Date(analysis.analyzed_at).toLocaleDateString(
+    lang === "hi" ? "hi-IN" : "en-GB",
+    {
+      day: "numeric",
+      month: "short",
+      year: "numeric",
+    },
+  );
   const issues = analysis.discrepancies.length;
   const highCount = analysis.discrepancies.filter(
     (d) => d.severity === "high",
   ).length;
 
+  // Translate status labels
+  const statusStrings = Object.values(STATUS_LABEL);
+  const statusT = useTranslate(statusStrings, lang);
+
   return (
     <Link
       href={`/dashboard/reports/${caseData.id}`}
-      className={`grid grid-cols-12 gap-4 px-6 py-5 items-center hover:bg-surface transition-colors ${
-        isLast ? "" : "border-b border-line"
-      }`}
+      className={`grid grid-cols-12 gap-4 px-6 py-5 items-center hover:bg-surface transition-colors ${isLast ? "" : "border-b border-line"
+        }`}
     >
       <div className="col-span-12 md:col-span-4 min-w-0">
         <div className="text-[15px] font-semibold truncate">
-          {caseData.patient_name}
+          {rowT[caseData.patient_name] ?? caseData.patient_name}
         </div>
         {caseData.diagnosis && (
           <div className="mt-0.5 text-[13px] text-muted truncate">
-            {caseData.diagnosis}
+            {rowT[caseData.diagnosis] ?? caseData.diagnosis}
           </div>
         )}
       </div>
@@ -208,9 +270,7 @@ function ReportRow({
       <div className="col-span-6 md:col-span-2">
         {analysis.status === "APPROVED" ? (
           <div className="flex items-baseline gap-1.5">
-            <span
-              className="text-[24px] font-bold leading-none tracking-tight text-[#0F9D58]"
-            >
+            <span className="text-[24px] font-bold leading-none tracking-tight text-[#0F9D58]">
               {100 - analysis.risk_score}%
             </span>
           </div>
@@ -229,12 +289,15 @@ function ReportRow({
           className="mt-1 text-[11px] uppercase tracking-wider"
           style={{
             color:
-              analysis.status === "APPROVED"
-                ? "#0F9D58"
-                : "var(--color-muted)",
+              analysis.status === "APPROVED" ? "#0F9D58" : "var(--color-muted)",
           }}
         >
-          {analysis.status === "APPROVED" ? "Confidence" : STATUS_LABEL[analysis.status]}
+          {analysis.status === "APPROVED"
+            ? lang === "hi"
+              ? "विश्वास"
+              : "Confidence"
+            : (statusT[STATUS_LABEL[analysis.status]] ??
+              STATUS_LABEL[analysis.status])}
         </div>
       </div>
 
@@ -251,19 +314,21 @@ function ReportRow({
                 strokeLinejoin="round"
               />
             </svg>
-            All clear
+            {t["All clear"] ?? "All clear"}
           </div>
         ) : (
           <div className="text-[13px]">
             <span className="font-semibold">{issues}</span>{" "}
             <span className="text-muted">
-              {issues === 1 ? "issue" : "issues"}
+              {issues === 1
+                ? (t["issue"] ?? "issue")
+                : (t["issues"] ?? "issues")}
             </span>
           </div>
         )}
         {highCount > 0 && (
           <div className="mt-0.5 text-[11px] uppercase tracking-wider font-bold text-[#C5221F]">
-            {highCount} high
+            {highCount} {t["high"] ?? "high"}
           </div>
         )}
       </div>
@@ -281,7 +346,7 @@ function ReportRow({
         <div className="text-right">
           <div className="text-[11px] text-muted">{analysed}</div>
           <div className="text-[12px] font-semibold text-brand mt-0.5">
-            View →
+            {t["View →"] ?? "View →"}
           </div>
         </div>
       </div>
@@ -289,7 +354,7 @@ function ReportRow({
   );
 }
 
-function EmptyState() {
+function EmptyState({ t }: { t: Record<string, string> }) {
   return (
     <div className="border border-dashed border-line bg-white px-12 py-20 text-center">
       <div className="mx-auto w-12 h-12 rounded-full bg-brand-subtle flex items-center justify-center mb-5">
@@ -307,16 +372,18 @@ function EmptyState() {
           <path d="M7 14l3-3 3 3 5-5" />
         </svg>
       </div>
-      <h2 className="text-[20px] font-semibold">No reports yet</h2>
+      <h2 className="text-[20px] font-semibold">
+        {t["No reports yet"] ?? "No reports yet"}
+      </h2>
       <p className="mt-1.5 text-[14px] text-muted max-w-md mx-auto">
-        Run an insurance check on a case to generate a report. You&apos;ll see
-        all your analysed claims here.
+        {t["Run an insurance check on a case to generate a report. You'll see all your analysed claims here."] ??
+          "Run an insurance check on a case to generate a report. You'll see all your analysed claims here."}
       </p>
       <Link
         href="/dashboard/cases"
         className="mt-6 inline-flex items-center gap-2 rounded-lg bg-brand hover:bg-brand-hover px-4 py-2.5 text-[14px] font-semibold text-white"
       >
-        Go to cases
+        {t["Go to cases"] ?? "Go to cases"}
       </Link>
     </div>
   );

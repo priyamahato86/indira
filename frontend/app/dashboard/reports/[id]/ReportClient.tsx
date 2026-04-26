@@ -17,6 +17,7 @@ import {
   YAxis,
 } from "recharts";
 import { findInsurer } from "@/lib/insurers";
+import { useTranslate } from "@/hooks/useTranslate";
 import type { ApiAnalysis, ApiCase, ApiDiscrepancy } from "@/lib/serialize";
 
 const SEVERITY_COLOR: Record<ApiDiscrepancy["severity"], string> = {
@@ -48,6 +49,59 @@ const STATUS_LABEL: Record<ApiAnalysis["status"], string> = {
   REJECTED: "Rejected",
 };
 
+// All static UI strings
+const UI_STRINGS = [
+  "All reports",
+  "Claim report",
+  "Re-run analysis",
+  "Re-running…",
+  "No report yet",
+  "Run an analysis on this case first.",
+  "Go to case",
+  "Status",
+  "Approval confidence",
+  "Discrepancies",
+  "High severity",
+  "All checks passed",
+  "Nothing critical",
+  "Risk score",
+  "out of 100",
+  "Band",
+  "Severity breakdown",
+  "No issues",
+  "High",
+  "Medium",
+  "Low",
+  "By category",
+  "Executive summary",
+  "Last analysed",
+  "Coverage check",
+  "No exclusions triggered",
+  "Within sum insured & sub-limits",
+  "Waiting periods satisfied",
+  "Documentation appears complete",
+  "Pass",
+  "No discrepancies were flagged against your policy.",
+  "Issue",
+  "Suggested action",
+  "flagged",
+  "Confidence",
+  "None",
+  "Approved",
+  "Needs review",
+  "Rejected",
+  "Reading hospital documents",
+  "Extracting policy clauses",
+  "Cross-referencing with AI",
+  "Generating discrepancy report",
+  "Analysing your claim",
+  "This can take up to a minute on first run",
+  "Running",
+  "Done",
+  "Switch to Hindi",
+  "Switch to English",
+];
+
 function bandColor(band: ApiAnalysis["risk_band"]): string {
   if (band === "green") return "#0F9D58";
   if (band === "yellow") return "#F6A93B";
@@ -55,7 +109,8 @@ function bandColor(band: ApiAnalysis["risk_band"]): string {
 }
 
 function bandGradient(band: ApiAnalysis["risk_band"]): string {
-  if (band === "green") return "linear-gradient(135deg, #0F9D58 0%, #0B7C44 100%)";
+  if (band === "green")
+    return "linear-gradient(135deg, #0F9D58 0%, #0B7C44 100%)";
   if (band === "yellow")
     return "linear-gradient(135deg, #F6A93B 0%, #C8821D 100%)";
   return "linear-gradient(135deg, #E5484D 0%, #B0353A 100%)";
@@ -65,6 +120,9 @@ export default function ReportClient({ initial }: { initial: ApiCase }) {
   const [caseData, setCaseData] = useState<ApiCase>(initial);
   const [running, setRunning] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [lang, setLang] = useState<"en" | "hi">("en");
+
+  const t = useTranslate(UI_STRINGS, lang);
 
   const insurer = caseData.policy
     ? findInsurer(caseData.policy.insurer)
@@ -95,17 +153,20 @@ export default function ReportClient({ initial }: { initial: ApiCase }) {
   if (!analysis) {
     return (
       <div className="space-y-6">
-        <BackLink />
+        <BackLink t={t} />
         <div className="border border-dashed border-line bg-white p-16 text-center">
-          <h1 className="text-[20px] font-semibold">No report yet</h1>
+          <h1 className="text-[20px] font-semibold">
+            {t["No report yet"] ?? "No report yet"}
+          </h1>
           <p className="mt-2 text-[14px] text-muted">
-            Run an analysis on this case first.
+            {t["Run an analysis on this case first."] ??
+              "Run an analysis on this case first."}
           </p>
           <Link
             href={`/dashboard/cases/${caseData.id}`}
             className="mt-6 inline-flex rounded-lg bg-brand hover:bg-brand-hover px-4 py-2.5 text-[14px] font-semibold text-white"
           >
-            Go to case
+            {t["Go to case"] ?? "Go to case"}
           </Link>
         </div>
       </div>
@@ -120,7 +181,19 @@ export default function ReportClient({ initial }: { initial: ApiCase }) {
 
   return (
     <div className="space-y-6">
-      <BackLink />
+      {/* Top bar: back link + language toggle */}
+      <div className="flex items-center justify-between">
+        <BackLink t={t} />
+        <button
+          onClick={() => setLang((l) => (l === "en" ? "hi" : "en"))}
+          className="flex items-center gap-2 rounded-lg border border-line bg-white px-4 py-2 text-[13px] font-semibold hover:bg-surface transition-colors shadow-sm"
+        >
+          <span className="text-[16px]">{lang === "en" ? "🇮🇳" : "🇬🇧"}</span>
+          {lang === "en"
+            ? (t["Switch to Hindi"] ?? "Switch to Hindi")
+            : (t["Switch to English"] ?? "Switch to English")}
+        </button>
+      </div>
 
       <Hero
         caseData={caseData}
@@ -129,6 +202,8 @@ export default function ReportClient({ initial }: { initial: ApiCase }) {
         insurerShort={insurer?.short}
         onRerun={rerun}
         running={running}
+        t={t}
+        lang={lang}
       />
 
       {error && (
@@ -137,33 +212,31 @@ export default function ReportClient({ initial }: { initial: ApiCase }) {
         </div>
       )}
 
-      {running && <AnalysisLoader />}
+      {running && <AnalysisLoader t={t} />}
 
-      <StatGrid analysis={analysis} highCount={highCount} />
+      <StatGrid analysis={analysis} highCount={highCount} t={t} />
 
       {isClean ? (
-        <CleanCoveragePanel analysis={analysis} />
+        <CleanCoveragePanel analysis={analysis} t={t} />
       ) : (
         <>
           <div className="grid grid-cols-1 lg:grid-cols-5 gap-px bg-line border border-line">
             <div className="lg:col-span-2 bg-white">
-              <RiskGauge analysis={analysis} />
+              <RiskGauge analysis={analysis} t={t} />
             </div>
             <div className="lg:col-span-3 bg-white">
-              <SeverityDonut discrepancies={analysis.discrepancies} />
+              <SeverityDonut discrepancies={analysis.discrepancies} t={t} />
             </div>
           </div>
 
-          <CategoryBars discrepancies={analysis.discrepancies} />
+          <CategoryBars discrepancies={analysis.discrepancies} t={t} lang={lang} />
         </>
       )}
 
       {analysis.summary && (
         <section className="border border-line bg-white">
-          <SectionLabel label="Executive summary" />
-          <p className="px-7 py-6 text-[15px] leading-relaxed text-ink-soft">
-            {analysis.summary}
-          </p>
+          <SectionLabel label={t["Executive summary"] ?? "Executive summary"} />
+          <SummaryText summary={analysis.summary} lang={lang} />
         </section>
       )}
 
@@ -171,10 +244,10 @@ export default function ReportClient({ initial }: { initial: ApiCase }) {
         <section>
           <div className="flex items-baseline justify-between mb-3">
             <h2 className="text-[12px] font-bold uppercase tracking-[0.08em] text-muted">
-              Discrepancies
+              {t["Discrepancies"] ?? "Discrepancies"}
             </h2>
             <span className="text-[13px] text-muted">
-              {analysis.discrepancies.length} flagged
+              {analysis.discrepancies.length} {t["flagged"] ?? "flagged"}
             </span>
           </div>
           <div className="border border-line bg-white">
@@ -184,6 +257,8 @@ export default function ReportClient({ initial }: { initial: ApiCase }) {
                 d={d}
                 index={i + 1}
                 isLast={i === analysis.discrepancies.length - 1}
+                t={t}
+                lang={lang}
               />
             ))}
           </div>
@@ -191,13 +266,16 @@ export default function ReportClient({ initial }: { initial: ApiCase }) {
       )}
 
       <p className="text-[12px] text-muted text-center pt-2">
-        Last analysed {new Date(analysis.analyzed_at).toLocaleString()}
+        {t["Last analysed"] ?? "Last analysed"}{" "}
+        {new Date(analysis.analyzed_at).toLocaleString(
+          lang === "hi" ? "hi-IN" : "en-GB",
+        )}
       </p>
     </div>
   );
 }
 
-function BackLink() {
+function BackLink({ t }: { t: Record<string, string> }) {
   return (
     <Link
       href="/dashboard/reports"
@@ -212,8 +290,24 @@ function BackLink() {
           strokeLinejoin="round"
         />
       </svg>
-      All reports
+      {t["All reports"] ?? "All reports"}
     </Link>
+  );
+}
+
+/** Translates the summary paragraph */
+function SummaryText({
+  summary,
+  lang,
+}: {
+  summary: string;
+  lang: "en" | "hi";
+}) {
+  const translated = useTranslate([summary], lang);
+  return (
+    <p className="px-7 py-6 text-[15px] leading-relaxed text-ink-soft">
+      {translated[summary] ?? summary}
+    </p>
   );
 }
 
@@ -224,6 +318,8 @@ function Hero({
   insurerShort,
   onRerun,
   running,
+  t,
+  lang,
 }: {
   caseData: ApiCase;
   analysis: ApiAnalysis;
@@ -231,7 +327,19 @@ function Hero({
   insurerShort?: string;
   onRerun: () => void;
   running: boolean;
+  t: Record<string, string>;
+  lang: "en" | "hi";
 }) {
+  // Translate patient name, diagnosis, hospital, admission date label
+  const dynamicStrings = [
+    caseData.patient_name,
+    caseData.diagnosis ?? "",
+    caseData.hospital ?? "",
+    caseData.admission_date ? `Admitted ${caseData.admission_date}` : "",
+    STATUS_LABEL[analysis.status],
+  ].filter(Boolean);
+  const dT = useTranslate(dynamicStrings, lang);
+
   return (
     <header
       className="relative overflow-hidden text-white p-8 sm:p-10"
@@ -240,7 +348,7 @@ function Hero({
       <div className="relative z-10 flex flex-wrap items-start justify-between gap-6">
         <div className="min-w-0 flex-1">
           <div className="flex items-center gap-2 text-[11px] font-bold uppercase tracking-[0.1em] opacity-80">
-            <span>Claim report</span>
+            <span>{t["Claim report"] ?? "Claim report"}</span>
             {insurerShort && (
               <>
                 <span className="opacity-60">·</span>
@@ -255,18 +363,26 @@ function Hero({
             )}
           </div>
           <h1 className="mt-3 text-[40px] sm:text-[48px] font-bold leading-[1.05] tracking-[-0.02em]">
-            {caseData.patient_name}
+            {dT[caseData.patient_name] ?? caseData.patient_name}
           </h1>
           {caseData.diagnosis && (
             <p className="mt-2 text-[16px] sm:text-[18px] opacity-90 leading-snug">
-              {caseData.diagnosis}
+              {dT[caseData.diagnosis] ?? caseData.diagnosis}
             </p>
           )}
           <div className="mt-5 flex flex-wrap items-center gap-2">
-            <Chip>{STATUS_LABEL[analysis.status]}</Chip>
-            {caseData.hospital && <Chip>{caseData.hospital}</Chip>}
+            <Chip>
+              {dT[STATUS_LABEL[analysis.status]] ??
+                STATUS_LABEL[analysis.status]}
+            </Chip>
+            {caseData.hospital && (
+              <Chip>{dT[caseData.hospital] ?? caseData.hospital}</Chip>
+            )}
             {caseData.admission_date && (
-              <Chip>Admitted {caseData.admission_date}</Chip>
+              <Chip>
+                {dT[`Admitted ${caseData.admission_date}`] ??
+                  `Admitted ${caseData.admission_date}`}
+              </Chip>
             )}
           </div>
         </div>
@@ -276,7 +392,9 @@ function Hero({
           className="rounded-lg bg-white text-ink hover:bg-white/90 disabled:opacity-60 px-5 py-2.5 text-[13px] font-semibold whitespace-nowrap shadow-sm"
           style={{ color: bandColor(analysis.risk_band) }}
         >
-          {running ? "Re-running…" : "Re-run analysis"}
+          {running
+            ? (t["Re-running…"] ?? "Re-running…")
+            : (t["Re-run analysis"] ?? "Re-run analysis")}
         </button>
       </div>
     </header>
@@ -294,9 +412,11 @@ function Chip({ children }: { children: React.ReactNode }) {
 function StatGrid({
   analysis,
   highCount,
+  t,
 }: {
   analysis: ApiAnalysis;
   highCount: number;
+  t: Record<string, string>;
 }) {
   const total = analysis.discrepancies.length;
   const confidence = 100 - analysis.risk_score;
@@ -305,27 +425,33 @@ function StatGrid({
     <section className="border border-line bg-white">
       <div className="grid grid-cols-2 md:grid-cols-4">
         <StatCell
-          label="Status"
-          value={STATUS_LABEL[analysis.status]}
+          label={t["Status"] ?? "Status"}
+          value={t[STATUS_LABEL[analysis.status]] ?? STATUS_LABEL[analysis.status]}
           accent={accent}
           icon={<StatusIcon status={analysis.status} color={accent} />}
         />
         <StatCell
-          label="Approval confidence"
+          label={t["Approval confidence"] ?? "Approval confidence"}
           value={`${confidence}%`}
           accent={accent}
-          hint={`Risk score ${analysis.risk_score}/100`}
+          hint={`${t["Risk score"] ?? "Risk score"} ${analysis.risk_score}/100`}
         />
         <StatCell
-          label="Discrepancies"
-          value={total === 0 ? "None" : String(total)}
+          label={t["Discrepancies"] ?? "Discrepancies"}
+          value={
+            total === 0 ? (t["None"] ?? "None") : String(total)
+          }
           accent={total === 0 ? "#0F9D58" : undefined}
-          hint={total === 0 ? "All checks passed" : undefined}
+          hint={
+            total === 0 ? (t["All checks passed"] ?? "All checks passed") : undefined
+          }
           muted={total === 0}
         />
         <StatCell
-          label="High severity"
-          value={highCount === 0 ? "None" : String(highCount)}
+          label={t["High severity"] ?? "High severity"}
+          value={
+            highCount === 0 ? (t["None"] ?? "None") : String(highCount)
+          }
           accent={
             highCount > 0
               ? "#E5484D"
@@ -333,7 +459,11 @@ function StatGrid({
                 ? "#0F9D58"
                 : undefined
           }
-          hint={highCount === 0 ? "Nothing critical" : undefined}
+          hint={
+            highCount === 0
+              ? (t["Nothing critical"] ?? "Nothing critical")
+              : undefined
+          }
           muted={highCount === 0}
           last
         />
@@ -409,7 +539,7 @@ function StatCell({
   muted?: boolean;
   last?: boolean;
 }) {
-  const isShort = muted || /^[A-Za-z]/.test(value); // text values render smaller
+  const isShort = muted || /^[A-Za-z\u0900-\u097F]/.test(value);
   return (
     <div
       className={`px-7 py-7 ${last ? "" : "md:border-r border-line"} border-b border-line md:border-b-0`}
@@ -431,14 +561,18 @@ function StatCell({
           )}
         </div>
       </div>
-      {hint && (
-        <div className="mt-2 text-[12px] text-muted">{hint}</div>
-      )}
+      {hint && <div className="mt-2 text-[12px] text-muted">{hint}</div>}
     </div>
   );
 }
 
-function CleanCoveragePanel({ analysis }: { analysis: ApiAnalysis }) {
+function CleanCoveragePanel({
+  analysis,
+  t,
+}: {
+  analysis: ApiAnalysis;
+  t: Record<string, string>;
+}) {
   const confidence = 100 - analysis.risk_score;
   const checks = [
     "No exclusions triggered",
@@ -458,13 +592,7 @@ function CleanCoveragePanel({ analysis }: { analysis: ApiAnalysis }) {
               fill="none"
               className="absolute inset-0"
             >
-              <circle
-                cx="48"
-                cy="48"
-                r="44"
-                stroke="#CEEAD6"
-                strokeWidth="4"
-              />
+              <circle cx="48" cy="48" r="44" stroke="#CEEAD6" strokeWidth="4" />
               <circle
                 cx="48"
                 cy="48"
@@ -489,14 +617,15 @@ function CleanCoveragePanel({ analysis }: { analysis: ApiAnalysis }) {
             {confidence}%
           </div>
           <div className="mt-1.5 text-[11px] font-bold uppercase tracking-[0.08em] text-muted">
-            Approval confidence
+            {t["Approval confidence"] ?? "Approval confidence"}
           </div>
           <p className="mt-3 text-[13px] text-ink-soft max-w-[220px]">
-            No discrepancies were flagged against your policy.
+            {t["No discrepancies were flagged against your policy."] ??
+              "No discrepancies were flagged against your policy."}
           </p>
         </div>
         <div className="lg:col-span-3 p-2">
-          <SectionLabel label="Coverage check" />
+          <SectionLabel label={t["Coverage check"] ?? "Coverage check"} />
           <ul className="px-2 py-2">
             {checks.map((c) => (
               <li
@@ -519,9 +648,9 @@ function CleanCoveragePanel({ analysis }: { analysis: ApiAnalysis }) {
                     strokeLinejoin="round"
                   />
                 </svg>
-                <span>{c}</span>
+                <span>{t[c] ?? c}</span>
                 <span className="ml-auto text-[11px] uppercase tracking-wider font-bold text-[#0F9D58]">
-                  Pass
+                  {t["Pass"] ?? "Pass"}
                 </span>
               </li>
             ))}
@@ -542,12 +671,18 @@ function SectionLabel({ label }: { label: string }) {
   );
 }
 
-function RiskGauge({ analysis }: { analysis: ApiAnalysis }) {
+function RiskGauge({
+  analysis,
+  t,
+}: {
+  analysis: ApiAnalysis;
+  t: Record<string, string>;
+}) {
   const color = bandColor(analysis.risk_band);
   const data = [{ name: "risk", value: analysis.risk_score, fill: color }];
   return (
     <div className="h-full flex flex-col">
-      <SectionLabel label="Risk score" />
+      <SectionLabel label={t["Risk score"] ?? "Risk score"} />
       <div className="flex-1 px-7 py-6">
         <div className="relative h-[220px]">
           <ResponsiveContainer width="100%" height="100%">
@@ -582,13 +717,13 @@ function RiskGauge({ analysis }: { analysis: ApiAnalysis }) {
               {analysis.risk_score}
             </div>
             <div className="mt-1 text-[11px] font-bold uppercase tracking-[0.08em] text-muted">
-              out of 100
+              {t["out of 100"] ?? "out of 100"}
             </div>
           </div>
         </div>
         <div className="mt-2 flex items-center justify-center gap-2">
           <span className="text-[11px] font-bold uppercase tracking-[0.08em] text-muted">
-            Band
+            {t["Band"] ?? "Band"}
           </span>
           <span
             className="text-[11px] font-bold uppercase tracking-[0.08em]"
@@ -604,8 +739,10 @@ function RiskGauge({ analysis }: { analysis: ApiAnalysis }) {
 
 function SeverityDonut({
   discrepancies,
+  t,
 }: {
   discrepancies: ApiDiscrepancy[];
+  t: Record<string, string>;
 }) {
   const data = useMemo(() => {
     const counts = { high: 0, medium: 0, low: 0 } as Record<
@@ -616,22 +753,22 @@ function SeverityDonut({
     return (["high", "medium", "low"] as const)
       .map((s) => ({
         key: s,
-        name: SEVERITY_LABEL[s],
+        name: t[SEVERITY_LABEL[s]] ?? SEVERITY_LABEL[s],
         value: counts[s],
         color: SEVERITY_COLOR[s],
       }))
       .filter((x) => x.value > 0);
-  }, [discrepancies]);
+  }, [discrepancies, t]);
 
   const total = data.reduce((s, d) => s + d.value, 0);
 
   return (
     <div className="h-full flex flex-col">
-      <SectionLabel label="Severity breakdown" />
+      <SectionLabel label={t["Severity breakdown"] ?? "Severity breakdown"} />
       <div className="flex-1 px-7 py-6 grid grid-cols-1 sm:grid-cols-2 gap-6 items-center">
         {data.length === 0 ? (
           <div className="col-span-2 h-[220px] flex items-center justify-center text-[13px] text-muted">
-            No issues
+            {t["No issues"] ?? "No issues"}
           </div>
         ) : (
           <>
@@ -683,7 +820,7 @@ function SeverityDonut({
                           className="w-2 h-2 rounded-full"
                           style={{ backgroundColor: SEVERITY_COLOR[s] }}
                         />
-                        {SEVERITY_LABEL[s]}
+                        {t[SEVERITY_LABEL[s]] ?? SEVERITY_LABEL[s]}
                       </span>
                       <span className="text-[12px] tabular-nums text-muted">
                         {value} · {pct}%
@@ -711,25 +848,33 @@ function SeverityDonut({
 
 function CategoryBars({
   discrepancies,
+  t,
+  lang,
 }: {
   discrepancies: ApiDiscrepancy[];
+  t: Record<string, string>;
+  lang: "en" | "hi";
 }) {
+  const categoryKeys = Object.values(CATEGORY_LABELS);
+  const catT = useTranslate(categoryKeys, lang);
+
   const data = useMemo(() => {
     const counts: Record<string, number> = {};
     for (const d of discrepancies) {
-      const k = CATEGORY_LABELS[d.category];
-      counts[k] = (counts[k] ?? 0) + 1;
+      const original = CATEGORY_LABELS[d.category];
+      const label = catT[original] ?? original;
+      counts[label] = (counts[label] ?? 0) + 1;
     }
     return Object.entries(counts)
       .map(([name, value]) => ({ name, value }))
       .sort((a, b) => b.value - a.value);
-  }, [discrepancies]);
+  }, [discrepancies, catT]);
 
   if (data.length === 0) return null;
 
   return (
     <section className="border border-line bg-white">
-      <SectionLabel label="By category" />
+      <SectionLabel label={t["By category"] ?? "By category"} />
       <div className="px-7 py-6">
         <div style={{ height: Math.max(140, data.length * 44) }}>
           <ResponsiveContainer width="100%" height="100%">
@@ -747,7 +892,7 @@ function CategoryBars({
               <YAxis
                 type="category"
                 dataKey="name"
-                width={140}
+                width={160}
                 tick={{ fontSize: 12, fill: "#1A1A1A", fontWeight: 500 }}
                 tickLine={false}
                 axisLine={false}
@@ -778,44 +923,57 @@ function DiscrepancyCard({
   d,
   index,
   isLast,
+  t,
+  lang,
 }: {
   d: ApiDiscrepancy;
   index: number;
   isLast: boolean;
+  t: Record<string, string>;
+  lang: "en" | "hi";
 }) {
+  // Translate the dynamic discrepancy content
+  const dynamicStrings = [
+    d.title,
+    d.detail,
+    d.policy_clause ?? "",
+    d.suggested_action ?? "",
+  ].filter(Boolean);
+  const dT = useTranslate(dynamicStrings, lang);
+
   const sevColor = SEVERITY_COLOR[d.severity];
   return (
-    <article
-      className={`flex ${isLast ? "" : "border-b border-line"}`}
-    >
+    <article className={`flex ${isLast ? "" : "border-b border-line"}`}>
       <div className="w-1 shrink-0" style={{ backgroundColor: sevColor }} />
       <div className="flex-1 p-7 min-w-0">
         <div className="flex items-start justify-between gap-3 flex-wrap">
           <div className="min-w-0">
             <div className="flex items-center gap-3 text-[10px] font-bold uppercase tracking-[0.1em]">
-              <span className="text-muted">Issue {index}</span>
+              <span className="text-muted">
+                {t["Issue"] ?? "Issue"} {index}
+              </span>
               <span style={{ color: sevColor }}>
-                ● {SEVERITY_LABEL[d.severity]}
+                ● {t[SEVERITY_LABEL[d.severity]] ?? SEVERITY_LABEL[d.severity]}
               </span>
               <span className="text-muted">·</span>
               <span className="text-muted">
-                {CATEGORY_LABELS[d.category]}
+                {t[CATEGORY_LABELS[d.category]] ?? CATEGORY_LABELS[d.category]}
               </span>
             </div>
             <h3 className="mt-2 text-[20px] font-semibold leading-snug tracking-tight">
-              {d.title}
+              {dT[d.title] ?? d.title}
             </h3>
           </div>
         </div>
         <p className="mt-3 text-[15px] leading-relaxed text-ink-soft">
-          {d.detail}
+          {dT[d.detail] ?? d.detail}
         </p>
         {d.policy_clause && (
           <blockquote
             className="mt-4 px-4 py-3 bg-surface text-[13px] italic text-muted border-l-2"
             style={{ borderLeftColor: sevColor }}
           >
-            “{d.policy_clause}”
+            "{dT[d.policy_clause] ?? d.policy_clause}"
           </blockquote>
         )}
         {d.suggested_action && (
@@ -837,9 +995,11 @@ function DiscrepancyCard({
             </svg>
             <div>
               <span className="text-[11px] font-bold uppercase tracking-[0.08em] text-brand block mb-0.5">
-                Suggested action
+                {t["Suggested action"] ?? "Suggested action"}
               </span>
-              <span className="text-ink-soft">{d.suggested_action}</span>
+              <span className="text-ink-soft">
+                {dT[d.suggested_action] ?? d.suggested_action}
+              </span>
             </div>
           </div>
         )}
@@ -855,7 +1015,7 @@ const LOADER_STEPS = [
   "Generating discrepancy report",
 ];
 
-function AnalysisLoader() {
+function AnalysisLoader({ t }: { t: Record<string, string> }) {
   const [step, setStep] = useState(0);
   const [elapsed, setElapsed] = useState(0);
 
@@ -880,10 +1040,12 @@ function AnalysisLoader() {
           <div className="absolute inset-0 rounded-full border-2 border-transparent border-t-brand animate-spin" />
         </div>
         <h3 className="text-[16px] font-semibold tracking-tight">
-          Analysing your claim
+          {t["Analysing your claim"] ?? "Analysing your claim"}
         </h3>
         <p className="mt-1 text-[13px] text-muted">
-          This can take up to a minute on first run · {formatElapsed(elapsed)}
+          {t["This can take up to a minute on first run"] ??
+            "This can take up to a minute on first run"}{" "}
+          · {formatElapsed(elapsed)}
         </p>
       </div>
       <ul className="divide-y divide-line">
@@ -937,16 +1099,16 @@ function AnalysisLoader() {
                       : "text-muted"
                 }
               >
-                {label}
+                {t[label] ?? label}
               </span>
               {isActive && (
                 <span className="ml-auto text-[11px] uppercase tracking-wider font-bold text-brand">
-                  Running
+                  {t["Running"] ?? "Running"}
                 </span>
               )}
               {isDone && (
                 <span className="ml-auto text-[11px] uppercase tracking-wider text-muted">
-                  Done
+                  {t["Done"] ?? "Done"}
                 </span>
               )}
             </li>
