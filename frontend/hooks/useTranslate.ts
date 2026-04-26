@@ -1,5 +1,5 @@
 "use client";
-
+//
 import { useEffect, useState } from "react";
 import { aiTranslate } from "@/lib/translate";
 
