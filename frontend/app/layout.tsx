@@ -10,6 +10,7 @@ const inter = Inter({
 
 export const metadata: Metadata = {
   title: "Indira — Know your claim's fate before you file it",
+  icons: "logo.png",
   description:
     "AI-powered pre-claim audit for Indian health insurance. Predict rejection probability, understand the reasons, and get corrective actions before you file.",
 };
